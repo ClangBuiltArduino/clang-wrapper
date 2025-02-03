@@ -8,7 +8,7 @@ PREFIX ?= /usr/local
 GIT_SHA := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # Build flags
-LDFLAGS := -X main.gitSHA=$(GIT_SHA)
+LDFLAGS := -X github.com/ClangBuiltArduino/clang-wrapper/internal/wrapper.gitSHA=$(GIT_SHA)
 
 # Binary names
 BINARY := clang-wrapper

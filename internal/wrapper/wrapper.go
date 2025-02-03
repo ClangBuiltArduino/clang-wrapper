@@ -18,6 +18,7 @@
 package wrapper
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,6 +30,8 @@ type Wrapper struct {
 	clangPath string
 }
 
+var gitSHA string
+
 func New(execName string) *Wrapper {
 	return &Wrapper{
 		execName: execName,
@@ -38,6 +41,15 @@ func New(execName string) *Wrapper {
 }
 
 func (w *Wrapper) Run(args []string) error {
+	for _, arg := range args {
+		if (arg == "--version" || arg == "--help") {
+			fmt.Println("clang-wrapper: A wrapper to workaround Arduino build system limitations.")
+			fmt.Println("git-commit:", gitSHA)
+			fmt.Println("For more details check: https://github.com/ClangBuiltArduino/clang-wrapper")
+			return nil
+		}
+	}
+
 	skipLTOFiles := make(map[string]bool)
 	var newArgs []string
 	var targetFile string
