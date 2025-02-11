@@ -20,9 +20,9 @@ package test
 import (
 	"io"
 	"os"
-	"testing"
 	"os/exec"
 	"strings"
+	"testing"
 )
 
 func TestClangWrapper(t *testing.T) {
@@ -49,23 +49,23 @@ func TestClangWrapper(t *testing.T) {
 		},
 		{
 			name:          "Clang Wrapper: --skip-lto=file1.c test.c",
-			args:          []string{"-O3", "--skip-lto=file1.c", "test.c"},
+			args:          []string{"-O3", "-flto", "--skip-lto=file1.c", "test.c"},
 			expectedFlags: "test.c",
 		},
 		{
 			name:          "Clang Wrapper: --skip-lto=file1.c file1.c",
-			args:          []string{"-O3", "--skip-lto=file1.c", "file1.c"},
-			expectedFlags: "-fno-lto -O3 file1.c",
+			args:          []string{"-O3", "-flto", "--skip-lto=file1.c", "file1.c"},
+			expectedFlags: "-O3 file1.c",
 		},
 		{
 			name:          "Clang Wrapper: --skip-lto=file1.c;file2.c test.c",
-			args:          []string{"-O3", "--skip-lto=file1.c;file2.c", "test.c"},
-			expectedFlags: "-O3 test.c",
+			args:          []string{"-O3", "-flto", "--skip-lto=file1.c;file2.c", "test.c"},
+			expectedFlags: "-O3 -flto test.c",
 		},
 		{
 			name:          "Clang Wrapper: --skip-lto=file1.c;file2.c file1.c",
-			args:          []string{"-O3", "--skip-lto=file1.c;file2.c", "file1.c"},
-			expectedFlags: "-fno-lto -O3 file1.c",
+			args:          []string{"-O3", "-flto", "--skip-lto=file1.c;file2.c", "file1.c"},
+			expectedFlags: "-O3 file1.c",
 		},
 	}
 
