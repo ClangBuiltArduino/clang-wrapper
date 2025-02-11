@@ -21,12 +21,25 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/ClangBuiltArduino/clang-wrapper/internal/utils"
 )
 
 func TestClangWrapper(t *testing.T) {
 	// Define tests with input flags and expected output
+	libcType := utils.DetectLibC()
+	bfdDir := "/home/test/bfd" // Mock directory for test
+
+	expectedLdPath := ""
+	if runtime.GOOS == "windows" {
+		expectedLdPath = "--ld-path=/home/test/bfd/bin/avr-ld.bfd.exe"
+	} else {
+		expectedLdPath = "--ld-path=/home/test/bfd/" + libcType + "/bin/avr-ld.bfd"
+	}
+
 	tests := []struct {
 		name          string
 		args          []string
@@ -66,6 +79,11 @@ func TestClangWrapper(t *testing.T) {
 			name:          "Clang Wrapper: --skip-lto=file1.c;file2.c file1.c",
 			args:          []string{"-O3", "-flto", "--skip-lto=file1.c;file2.c", "file1.c"},
 			expectedFlags: "-O3 file1.c",
+		},
+		{
+			name:          "Clang Wrapper: --bfd-dir argument",
+			args:          []string{"--bfd-dir=" + bfdDir, "test.c"},
+			expectedFlags: expectedLdPath,
 		},
 	}
 

@@ -22,13 +22,17 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
+
+	"github.com/ClangBuiltArduino/clang-wrapper/internal/utils"
 )
 
 type Wrapper struct {
 	execName  string
 	clangPath string
 	verbose   bool
+	bfdDir    string
 }
 
 var gitSHA string
@@ -87,6 +91,12 @@ func (w *Wrapper) Run(args []string) error {
 			continue // Do not pass this to clang
 		}
 
+		// Handle --bfd-dir argument
+		if strings.HasPrefix(arg, "--bfd-dir=") {
+			w.bfdDir = strings.TrimPrefix(arg, "--bfd-dir=")
+			continue // Do not pass this to clang
+		}
+
 		// Track the input file
 		if strings.HasSuffix(arg, ".c") || strings.HasSuffix(arg, ".cpp") ||
 			strings.HasSuffix(arg, ".cc") || strings.HasSuffix(arg, ".cxx") ||
@@ -106,6 +116,18 @@ func (w *Wrapper) Run(args []string) error {
 			}
 		}
 		newArgs = filteredArgs
+	}
+
+	// Append --ld-path if --bfd-dir was provided
+	if w.bfdDir != "" {
+		var ldPath string
+		if runtime.GOOS == "windows" {
+			ldPath = filepath.Join(w.bfdDir, "bin", "avr-ld.bfd.exe")
+		} else {
+			libcType := utils.DetectLibC()
+			ldPath = filepath.Join(w.bfdDir, libcType, "bin", "avr-ld.bfd")
+		}
+		newArgs = append(newArgs, fmt.Sprintf("--ld-path=%s", ldPath))
 	}
 
 	// Temporarily modify PATH to prevent using system clang
