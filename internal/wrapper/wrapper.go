@@ -28,6 +28,7 @@ import (
 type Wrapper struct {
 	execName  string
 	clangPath string
+	verbose   bool
 }
 
 var gitSHA string
@@ -58,14 +59,19 @@ func (w *Wrapper) Run(args []string) error {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 
+		// Handle --wrapper-verbose argument
+		if arg == "--wrapper-verbose" {
+			w.verbose = true
+			continue // Do not pass this to clang
+		}
+
 		// Handle --skip-lto argument
 		if strings.HasPrefix(arg, "--skip-lto=") {
 			files := strings.Split(strings.TrimPrefix(arg, "--skip-lto="), ";")
-			//fmt.Println("files:", files)
 			for _, f := range files {
 				skipLTOFiles[filepath.Base(f)] = true
 			}
-			continue
+			continue // Do not pass this to clang
 		}
 
 		// Track the input file
@@ -93,6 +99,11 @@ func (w *Wrapper) Run(args []string) error {
 	// Prepend the current directory to PATH
 	oldPath := os.Getenv("PATH")
 	defer os.Setenv("PATH", oldPath) // Restore original PATH after command runs
+
+	// Only print the execution command if verbose is enabled
+	if w.verbose {
+		fmt.Println("Executing:", w.clangPath, newArgs)
+	}
 
 	os.Setenv("PATH", filepath.Dir(os.Args[0])+":"+oldPath)
 	cmd := exec.Command(w.clangPath, newArgs...)
