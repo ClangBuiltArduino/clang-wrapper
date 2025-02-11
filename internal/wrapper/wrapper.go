@@ -34,10 +34,23 @@ type Wrapper struct {
 var gitSHA string
 
 func New(execName string) *Wrapper {
+	// Get the absolute path of the wrapper binary
+	absPath, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error resolving absolute path: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get the directory where the wrapper is located
+	wrapperDir := filepath.Dir(absPath)
+
+	// Construct the expected Clang binary path
+	clangBinary := strings.TrimSuffix(execName, "-wrapper")
+	clangPath := filepath.Join(wrapperDir, clangBinary)
+
 	return &Wrapper{
-		execName: execName,
-		// Clang binary should be in the same directory as the wrapper
-		clangPath: filepath.Join(filepath.Dir(os.Args[0]), strings.TrimSuffix(execName, "-wrapper")),
+		execName:  execName,
+		clangPath: clangPath,
 	}
 }
 
