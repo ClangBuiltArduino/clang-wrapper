@@ -29,10 +29,11 @@ import (
 )
 
 type Wrapper struct {
-	execName  string
-	clangPath string
-	verbose   bool
-	bfdDir    string
+	execName    string
+	clangPath   string
+	verbose     bool
+	bfdDir      string
+	llvmGoldDir string
 }
 
 var gitSHA string
@@ -91,6 +92,12 @@ func (w *Wrapper) Run(args []string) error {
 			continue // Do not pass this to clang
 		}
 
+		// Handle --llvmgold-dir argument
+		if strings.HasPrefix(arg, "--llvmgold-dir=") {
+			w.llvmGoldDir = strings.TrimPrefix(arg, "--llvmgold-dir=")
+			continue // Do not pass this to clang
+		}
+
 		// Handle --bfd-dir argument
 		if strings.HasPrefix(arg, "--bfd-dir=") {
 			w.bfdDir = strings.TrimPrefix(arg, "--bfd-dir=")
@@ -105,6 +112,28 @@ func (w *Wrapper) Run(args []string) error {
 		}
 
 		newArgs = append(newArgs, arg)
+	}
+
+	// Handle LLVMgold.so symlink creation
+	if w.llvmGoldDir != "" && runtime.GOOS == "linux" {
+		clangLibDir := filepath.Join(filepath.Dir(w.clangPath), "..", "lib")
+		llvmGoldPath := filepath.Join(clangLibDir, "LLVMgold.so")
+
+		if _, err := os.Stat(llvmGoldPath); os.IsNotExist(err) {
+			libcType := utils.DetectLibC()
+			sourcePath := filepath.Join(w.llvmGoldDir, libcType, "lib", "LLVMgold.so")
+			if _, err := os.Stat(sourcePath); err == nil {
+				if err := os.Symlink(sourcePath, llvmGoldPath); err != nil {
+					fmt.Fprintf(os.Stderr, "Error creating symlink for LLVMgold.so: %v\n", err)
+					return err
+				}
+				if w.verbose {
+					fmt.Println("Created symlink:", llvmGoldPath, "->", sourcePath)
+				}
+			} else {
+				fmt.Fprintf(os.Stderr, "Source LLVMgold.so not found at %s\n", sourcePath)
+			}
+		}
 	}
 
 	// If the current file is in skip-lto list, add -fno-lto flag
