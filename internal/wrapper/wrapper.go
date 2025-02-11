@@ -26,7 +26,7 @@ import (
 )
 
 type Wrapper struct {
-	execName string
+	execName  string
 	clangPath string
 }
 
@@ -42,7 +42,7 @@ func New(execName string) *Wrapper {
 
 func (w *Wrapper) Run(args []string) error {
 	for _, arg := range args {
-		if (arg == "--version" || arg == "--help") {
+		if arg == "--version" || arg == "--help" {
 			fmt.Println("clang-wrapper: A wrapper to workaround Arduino build system limitations.")
 			fmt.Println("git-commit:", gitSHA)
 			fmt.Println("For more details check: https://github.com/ClangBuiltArduino/clang-wrapper")
@@ -57,7 +57,7 @@ func (w *Wrapper) Run(args []string) error {
 	// Parse arguments
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
-		
+
 		// Handle --skip-lto argument
 		if strings.HasPrefix(arg, "--skip-lto=") {
 			files := strings.Split(strings.TrimPrefix(arg, "--skip-lto="), ";")
@@ -69,9 +69,9 @@ func (w *Wrapper) Run(args []string) error {
 		}
 
 		// Track the input file
-		if strings.HasSuffix(arg, ".c") || strings.HasSuffix(arg, ".cpp") || 
-		   strings.HasSuffix(arg, ".cc") || strings.HasSuffix(arg, ".cxx") ||
-		   strings.HasSuffix(arg, ".S") {
+		if strings.HasSuffix(arg, ".c") || strings.HasSuffix(arg, ".cpp") ||
+			strings.HasSuffix(arg, ".cc") || strings.HasSuffix(arg, ".cxx") ||
+			strings.HasSuffix(arg, ".S") {
 			targetFile = filepath.Base(arg)
 		}
 
@@ -80,7 +80,13 @@ func (w *Wrapper) Run(args []string) error {
 
 	// If the current file is in skip-lto list, add -fno-lto flag
 	if targetFile != "" && skipLTOFiles[targetFile] {
-		newArgs = append([]string{"-fno-lto"}, newArgs...)
+		filteredArgs := []string{}
+		for _, arg := range newArgs {
+			if arg != "-flto" {
+				filteredArgs = append(filteredArgs, arg)
+			}
+		}
+		newArgs = filteredArgs
 	}
 
 	// Temporarily modify PATH to prevent using system clang
@@ -89,7 +95,7 @@ func (w *Wrapper) Run(args []string) error {
 	defer os.Setenv("PATH", oldPath) // Restore original PATH after command runs
 
 	os.Setenv("PATH", filepath.Dir(os.Args[0])+":"+oldPath)
-	cmd := exec.Command("./"+w.clangPath, newArgs...)
+	cmd := exec.Command(w.clangPath, newArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
