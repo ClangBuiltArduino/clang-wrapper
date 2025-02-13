@@ -35,9 +35,9 @@ func TestClangWrapper(t *testing.T) {
 
 	expectedLdPath := ""
 	if runtime.GOOS == "windows" {
-		expectedLdPath = "--ld-path=/home/test/bfd/bin/avr-ld.bfd.exe"
+		expectedLdPath = "--ld-path=/home/test/bfd/bin/avr-ld.exe"
 	} else {
-		expectedLdPath = "--ld-path=/home/test/bfd/" + libcType + "/bin/avr-ld.bfd"
+		expectedLdPath = "--ld-path=/home/test/bfd/" + libcType + "/bin/avr-ld"
 	}
 
 	tests := []struct {
@@ -83,7 +83,7 @@ func TestClangWrapper(t *testing.T) {
 		{
 			name:          "Clang Wrapper: --bfd-dir argument",
 			args:          []string{"--bfd-dir=" + bfdDir, "test.c"},
-			expectedFlags: expectedLdPath,
+			expectedFlags: expectedLdPath + " -fuse-ld=bfd",
 		},
 	}
 

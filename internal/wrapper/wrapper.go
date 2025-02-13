@@ -151,12 +151,13 @@ func (w *Wrapper) Run(args []string) error {
 	if w.bfdDir != "" {
 		var ldPath string
 		if runtime.GOOS == "windows" {
-			ldPath = filepath.Join(w.bfdDir, "bin", "avr-ld.bfd.exe")
+			ldPath = filepath.Join(w.bfdDir, "bin", "avr-ld.exe")
 		} else {
 			libcType := utils.DetectLibC()
-			ldPath = filepath.Join(w.bfdDir, libcType, "bin", "avr-ld.bfd")
+			ldPath = filepath.Join(w.bfdDir, libcType, "bin", "avr-ld")
 		}
 		newArgs = append(newArgs, fmt.Sprintf("--ld-path=%s", ldPath))
+		newArgs = append(newArgs, "-fuse-ld=bfd")
 	}
 
 	// Temporarily modify PATH to prevent using system clang
