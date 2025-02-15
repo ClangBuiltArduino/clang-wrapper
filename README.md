@@ -8,9 +8,9 @@ The Arduino build system applies specific compiler flag combinations based on fi
 
 ### The Problem
 
-One specific issue arises when compiling the `HardwareSerial1.cpp` file from the Arduino AVR core. Clang's Link-Time Optimization (LTO) aggressively removes what it considers unused functions, causing critical functionality to break in the final binary.
+One specific issue arises when compiling the `wiring.c` file from the Arduino AVR core. Clang's Link-Time Optimization (LTO) causes breakage in the final program.
 
-### The Solution
+### The Workaround
 
 This wrapper introduces a special `--skip-lto` flag, which allows users to specify files where LTO should be disabled. When invoked, the wrapper:
 1. Checks if any of the specified files match the current compilation target.
@@ -18,6 +18,17 @@ This wrapper introduces a special `--skip-lto` flag, which allows users to speci
 3. Otherwise, it forwards all arguments unchanged.
 
 This approach ensures that essential functions remain intact while maintaining the benefits of LTO for other files. Future versions may extend functionality for additional per-file flag manipulations.
+
+### Other functionality: Hanlding glibc and musl hosts
+
+Since we dynamically link the **BFD linker** and the **LLVMgold.so** plugin, we provide separate binaries for **musl** and **glibc** hosts. However, the **Arduino IDE** lacks a mechanism to detect **musl-based** systems.  
+
+To address this, we introduced two new flags:  
+
+- `--bfd-dir` → Specifies the root directory containing **BFD linker** binaries for both **musl** and **glibc**.  
+- `--llvmgold-dir` → Specifies the root directory containing **LLVMgold.so** binaries for both **musl** and **glibc**.  
+
+Within these directories, binaries are organized into separate subdirectories for each **libc** variant. The **wrapper** automatically detects the system's **libc** and selects the appropriate binaries accordingly.
 
 ## Installation
 
